@@ -1,16 +1,17 @@
 const User = require('../models/user');
 const { validationResult } = require('express-validator');
-const { createUserValidation } = require('../validations/userValidations');
+const { createUserValidation } = require('./../utils/validations/userValidations');
 
 exports.createUser = [
   createUserValidation,
   async (req, res) => {
+    const { nome, sobrenome, email, senha } = req.body; 
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-  
-    const { nome, sobrenome, email, senha } = req.body;
+    
     const user = await User.create({ nome, sobrenome, email, senha });
     res.status(201).json(user);
   },
