@@ -1,6 +1,6 @@
 const User = require('../models/user');
 const { validationResult } = require('express-validator');
-const { createUserValidation } = require('../validations/userValidations');
+const { createUserValidation } = require('./../utils/validations/userValidations');
 
 exports.createUser = [
   createUserValidation,
