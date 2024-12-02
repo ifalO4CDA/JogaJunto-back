@@ -1,9 +1,13 @@
 const { body, param } = require('express-validator');
 const User = require('./../../models/user');
 
-const existsEmail = async (email) => {
+const existsEmail = async (email, { req }) => {
+    const { method } = req
     const user = await User.findOne({ where: { email } });
-
+    if (method == 'PUT') {
+        const {id } = req.params
+        if (user['id_usuario'] == id) return true
+    }
     if (user) {
         throw new Error('Já existe um usuário com este email.');
     }
@@ -28,7 +32,7 @@ exports.createUserValidation = [
         .isEmail().withMessage('O email deve ser válido.')
         .custom(existsEmail),
 ];
- 
+
 exports.alterUserValidation = [
     param('id')
         .notEmpty().withMessage('O ID precisa ser informado.')
