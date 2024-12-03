@@ -1,4 +1,4 @@
-const { body, param } = require('express-validator');
+const { body } = require('express-validator');
 const User = require('./../../models/user'); 
 
 // Validação para verificar se o usuário existe
