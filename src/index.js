@@ -12,7 +12,7 @@ app.use(express.json());
 
 // Rotas
 app.use('/api/users', userRoutes); 
-app.use('/api/reservations', reservationRoutes);
+app.use('/api/reservation', reservationRoutes);
 
 
 // Inicializa o servidor

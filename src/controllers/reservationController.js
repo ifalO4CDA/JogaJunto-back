@@ -1,11 +1,11 @@
-const { Reservation } = require('../models/reservation');
+const Reservation = require('../models/reservation');
 
 const ReservationController = {
   // Criar uma nova reserva
   create: async (req, res) => {
     try {
-      const data = req.body;
-      const reservation = await Reservation.create(data);
+      const { id_usuario, id_quadra, id_grupo, data_reserva, horario_inicio, horario_fim, status, valor_total, ativo, motivo_cancelamento } = req.body;
+      const reservation = await Reservation.create({ id_usuario, id_quadra, id_grupo, data_reserva, horario_inicio, horario_fim, status, valor_total, ativo, motivo_cancelamento });
       res.status(201).json(reservation);
     } catch (error) {
       console.error(error);
@@ -13,7 +13,7 @@ const ReservationController = {
     }
   },
 
-  // Buscar reserva por ID
+  // Buscar reserva por ID  
   findById: async (req, res) => {
     try {
       const { id } = req.params;
