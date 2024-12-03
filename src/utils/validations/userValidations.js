@@ -33,6 +33,13 @@ exports.createUserValidation = [
         .custom(existsEmail),
 ];
 
+exports.removeUserValidation = [
+    param('id')
+        .notEmpty().withMessage('O ID precisa ser informado.')
+        .isInt().withMessage('O ID deve ser um número inteiro.')
+        .custom(existsUser)
+];
+
 exports.alterUserValidation = [
     param('id')
         .notEmpty().withMessage('O ID precisa ser informado.')

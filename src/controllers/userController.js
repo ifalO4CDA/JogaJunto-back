@@ -1,6 +1,6 @@
 const User = require('../models/user');
 const { validationResult } = require('express-validator');
-const { createUserValidation, alterUserValidation } = require('./../utils/validations/userValidations');
+const { createUserValidation, alterUserValidation, removeUserValidation } = require('./../utils/validations/userValidations');
 const  createResponse = require('./../utils/helpers/responseHelper');
 exports.createUser = [
   createUserValidation,
@@ -37,6 +37,34 @@ exports.getUsers = async (req, res) => {
     res.status(500).json({ message: 'Erro ao buscar usuários', error });
   }
 };
+
+exports.removeUser = [
+  removeUserValidation,
+
+  async (req, res) => {
+    const userID = req.params.id;
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json(
+        createResponse({
+          status: 'Erro',
+          message: 'Erro de validação.',
+          errors: errors.array(),
+        })
+      );
+    }
+
+    const user = await User.destroy({ where: { id_usuario: userID } });
+    res.status(201).json(
+      createResponse({
+        status: 'Sucesso',
+        message: 'Usuário removido com sucesso!',
+        data: {"id": userID}
+      })
+    );
+  }
+]
 
 exports.alterUser = [
   alterUserValidation,
