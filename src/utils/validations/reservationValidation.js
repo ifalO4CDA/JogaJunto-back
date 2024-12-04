@@ -1,13 +1,20 @@
 const { body, param } = require('express-validator');
-const Reservation = require('../models/reservation');
-const User = require('../models/user');
-const Court = require('../models/court'); // Caso haja um modelo para a quadra (id_quadra)
+const Reservation = require('./../../models/reservation');
+const User = require('./../../models/user');
 
-const existsReservation = async (id) => {
-    const reservation = await Reservation.findByPk(id);
+const existsReservation = async (id_reserva, { req }) => {
+    const reservation = await Reservation.findByPk(id_reserva);
+
     if (!reservation) {
         throw new Error('Reserva não encontrada.');
     }
+    
+    // Verifica se o status da reserva é "pendente" ou "confirmada"
+    const validStatuses = ['pendente', 'confirmada'];
+    if (!validStatuses.includes(reservation.status)) {
+        throw new Error('Somente reservas com status "pendente" ou "confirmada" podem ser alteradas.');
+    }
+
     return true;
 };
 
@@ -15,14 +22,6 @@ const existsUser = async (id_usuario) => {
     const user = await User.findByPk(id_usuario);
     if (!user) {
         throw new Error('Usuário não encontrado.');
-    }
-    return true;
-};
-
-const existsCourt = async (id_quadra) => {
-    const court = await Court.findByPk(id_quadra); // Supondo que você tenha um modelo de Court
-    if (!court) {
-        throw new Error('Quadra não encontrada.');
     }
     return true;
 };
@@ -35,8 +34,7 @@ exports.createReservationValidation = [
 
     body('id_quadra')
         .notEmpty().withMessage('O ID da quadra é obrigatório.')
-        .isInt().withMessage('O ID da quadra deve ser um número inteiro.')
-        .custom(existsCourt), // Verifica se a quadra existe
+        .isInt().withMessage('O ID da quadra deve ser um número inteiro.'),
 
     body('data_reserva')
         .notEmpty().withMessage('A data da reserva é obrigatória.')
@@ -91,20 +89,10 @@ exports.createReservationValidation = [
 ];
 
 exports.updateReservationValidation = [
-    param('id')
+    body('id_reserva')
         .notEmpty().withMessage('O ID da reserva é obrigatório.')
         .isInt().withMessage('O ID da reserva deve ser um número inteiro.')
-        .custom(existsReservation), // Verifica se a reserva existe
-
-    body('id_usuario')
-        .optional()
-        .isInt().withMessage('O ID do usuário deve ser um número inteiro.')
-        .custom(existsUser),  // Verifica se o usuário existe
-
-    body('id_quadra')
-        .optional()
-        .isInt().withMessage('O ID da quadra deve ser um número inteiro.')
-        .custom(existsCourt), // Verifica se a quadra existe
+        .custom(existsReservation), // Verifica se a reserva existe e se o status é "pendente" ou "confirmada"
 
     body('data_reserva')
         .optional()
@@ -149,17 +137,13 @@ exports.updateReservationValidation = [
         .optional()
         .isIn(['pendente', 'confirmada', 'cancelada']).withMessage('O status deve ser um dos seguintes: pendente, confirmada, cancelada.'),
 
-    body('motivo_cancelamento')
-        .optional()
-        .isString().withMessage('O motivo de cancelamento deve ser uma string.'),
-
     body('ativo')
         .optional()
         .isBoolean().withMessage('O campo "ativo" deve ser um valor booleano.')
 ];
 
 exports.removeReservationValidation = [
-    param('id')
+    body('id_reserva')
         .notEmpty().withMessage('O ID da reserva é obrigatório.')
         .isInt().withMessage('O ID da reserva deve ser um número inteiro.')
         .custom(existsReservation) // Verifica se a reserva existe
