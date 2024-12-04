@@ -1,4 +1,4 @@
-const { body } = require('express-validator');
+const { body, param } = require('express-validator');
 const User = require('./../../models/user');
 const MoreInformation = require('./../../models/moreInformation');
 
@@ -65,7 +65,7 @@ const birthDateValidation = (data_nascimento) => {
     return true;
 }
 
-const createMoreInformationsValidation = [
+exports.createMoreInformationsValidation = [
     body('id_usuario')
         .trim().escape()
         .notEmpty().withMessage('O ID do usuário é obrigatório.')
@@ -82,6 +82,9 @@ const createMoreInformationsValidation = [
         .custom(cpfValidation),
 ];
 
-module.exports = {
-    createMoreInformationsValidation,
-};
+exports.getMoreInformationsValidation = [
+    param('id')
+        .notEmpty().withMessage('O ID do usuário é obrigatório.')
+        .isInt().withMessage('O ID do usuário deve ser um número inteiro.')
+        .custom(userExists),
+];
