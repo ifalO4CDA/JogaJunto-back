@@ -19,10 +19,10 @@ const existsUser = async (id_usuario) => {
 };
 
 exports.createGroupValidation = [
-    body('nome')
-        .notEmpty().withMessage('O nome do grupo é obrigatório.')
-        .isString().withMessage('O nome do grupo deve ser uma string.')
-        .isLength({ max: 100 }).withMessage('O nome do grupo não pode ter mais de 100 caracteres.'),
+    body('nome_grupo')
+        .notEmpty().withMessage('O nome_grupo do grupo é obrigatório.')
+        .isString().withMessage('O nome_grupo do grupo deve ser uma string.')
+        .isLength({ max: 100 }).withMessage('O nome_grupo do grupo não pode ter mais de 100 caracteres.'),
 
     body('id_criador')
         .notEmpty().withMessage('O ID do criador é obrigatório.')
@@ -36,15 +36,15 @@ exports.createGroupValidation = [
 ];
 
 exports.updateGroupValidation = [
-    param('id_grupo')
+    body('id_grupo')
         .notEmpty().withMessage('O ID do grupo é obrigatório.')
         .isInt().withMessage('O ID do grupo deve ser um número inteiro.')
         .custom(existsGroup),
 
-    body('nome')
+    body('nome_grupo')
         .optional()
-        .isString().withMessage('O nome do grupo deve ser uma string.')
-        .isLength({ max: 100 }).withMessage('O nome do grupo não pode ter mais de 100 caracteres.'),
+        .isString().withMessage('O nome_grupo do grupo deve ser uma string.')
+        .isLength({ max: 100 }).withMessage('O nome_grupo do grupo não pode ter mais de 100 caracteres.'),
 
     body('descricao')
         .optional()
@@ -53,19 +53,21 @@ exports.updateGroupValidation = [
 ];
 
 exports.removeGroupValidation = [
-    param('id_grupo')
-        .notEmpty().withMessage('O ID do grupo é obrigatório.')
-        .isInt().withMessage('O ID do grupo deve ser um número inteiro.')
-        .custom(async (id_grupo, { req }) => {
-            const group = await Group.findByPk(id_grupo);
-            if (!group) {
-                throw new Error('Grupo não encontrado.');
-            }
-            if (group.id_criador !== req.body.id_usuario) {
-                throw new Error('Apenas o criador do grupo pode excluí-lo.');
-            }
-            return true;
-        }),
+    body('id_grupo')
+      .notEmpty().withMessage('O ID do grupo é obrigatório.')
+      .isInt().withMessage('O ID do grupo deve ser um número inteiro.')
+      .custom(async (id_grupo, { req }) => {
+        const group = await Group.findByPk(id_grupo);
+        if (!group) {
+          throw new Error('Grupo não encontrado.');
+        }
+  
+        // Verifica se o usuário da requisição é o criador do grupo
+        if (group.id_criador !== req.body.id_usuario) {
+          throw new Error('Apenas o criador do grupo pode excluí-lo.');
+        }
+        return true;
+      }),
 ];
 
 exports.listUserGroupsValidation = [
@@ -76,7 +78,7 @@ exports.listUserGroupsValidation = [
 ];
 
 exports.addRemoveGroupMemberValidation = [
-    param('id_grupo')
+    body('id_grupo')
         .notEmpty().withMessage('O ID do grupo é obrigatório.')
         .isInt().withMessage('O ID do grupo deve ser um número inteiro.')
         .custom(existsGroup),

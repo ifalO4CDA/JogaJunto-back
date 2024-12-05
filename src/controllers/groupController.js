@@ -1,13 +1,12 @@
 const { validationResult } = require('express-validator');
-const Group = require('../models/group');
-const User = require('../models/user');
+const {Group, User} = require('../models/indexModel');
 const createResponse = require('../utils/helpers/responseHelper');
 const { createGroupValidation, updateGroupValidation, removeGroupValidation } = require('../utils/validations/groupValidation');
 
 exports.createGroup = [
   createGroupValidation,
   async (req, res) => {
-    const { nome, id_criador, descricao } = req.body;
+    const { nome_grupo, id_criador } = req.body;
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -21,7 +20,7 @@ exports.createGroup = [
     }
 
     try {
-      const group = await Group.create({ nome, id_criador, descricao });
+      const group = await Group.create({ nome_grupo, id_criador });
       res.status(201).json(
         createResponse({
           status: 'Sucesso',
@@ -45,8 +44,8 @@ exports.createGroup = [
 exports.updateGroup = [
   updateGroupValidation,
   async (req, res) => {
-    const { id_grupo } = req.params;
-    const { nome, descricao } = req.body;
+    const id_grupo = req.body.id_grupo;
+    const { nome_grupo } = req.body;
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -70,7 +69,7 @@ exports.updateGroup = [
         );
       }
 
-      await group.update({ nome, descricao });
+      await group.update({ nome_grupo });
       res.status(200).json(
         createResponse({
           status: 'Sucesso',
@@ -92,10 +91,10 @@ exports.updateGroup = [
 ];
 
 exports.deleteGroup = [
-  removeGroupValidation,
   async (req, res) => {
-    const { id_grupo } = req.params;
+    const { id_grupo, id_usuario } = req.body;
 
+    // Verifica erros de validação
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json(
@@ -108,6 +107,7 @@ exports.deleteGroup = [
     }
 
     try {
+      // Busca o grupo
       const group = await Group.findByPk(id_grupo);
       if (!group) {
         return res.status(404).json(
@@ -118,6 +118,17 @@ exports.deleteGroup = [
         );
       }
 
+      // Verifica novamente a permissão (apenas por precaução)
+      if (group.id_criador !== id_usuario) {
+        return res.status(403).json(
+          createResponse({
+            status: 'Erro',
+            message: 'Apenas o criador do grupo pode excluí-lo.',
+          })
+        );
+      }
+
+      // Exclui o grupo
       await group.destroy();
       res.status(200).json(
         createResponse({
@@ -127,7 +138,7 @@ exports.deleteGroup = [
         })
       );
     } catch (error) {
-      console.error(error);
+      console.error('Erro ao excluir o grupo:', error);
       res.status(500).json(
         createResponse({
           status: 'Erro',
@@ -136,7 +147,7 @@ exports.deleteGroup = [
         })
       );
     }
-  }
+  },
 ];
 
 exports.listAllGroups = [
@@ -165,7 +176,7 @@ exports.listAllGroups = [
 
 exports.listUserGroups = [
   async (req, res) => {
-    const { id_usuario } = req.params;
+    const id_usuario = req.body.id_usuario;
 
     try {
       const groups = await Group.findAll({ where: { id_criador: id_usuario } });
@@ -191,7 +202,7 @@ exports.listUserGroups = [
 
 exports.addRemoveGroupMember = [
   async (req, res) => {
-    const { id_grupo } = req.params;
+    const id_grupo = req.body.id_grupo;
     const { id_usuario, acao } = req.body; // 'adicionar' ou 'remover'
 
     try {
