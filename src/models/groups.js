@@ -15,19 +15,19 @@ const Group = sequelize.define("Group", {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'usuarios', // Supondo que a tabela de usuários tenha um nome 'usuarios'
+      model: 'usuarios',
       key: 'id_usuario',
     },
   },
   data_criacao: {
     type: DataTypes.DATE,
     allowNull: false,
-    defaultValue: DataTypes.NOW, // Data de criação será a data atual por padrão
+    defaultValue: DataTypes.NOW,
   }
 }, {
   tableName: "grupos",
   schema: "joga_junto_schema",
-  timestamps: false, // Caso você não queira campos de timestamp automáticos
+  timestamps: false,
 });
 
 module.exports = Group;

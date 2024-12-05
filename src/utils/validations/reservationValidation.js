@@ -9,7 +9,6 @@ const existsReservation = async (id_reserva, { req }) => {
         throw new Error('Reserva não encontrada.');
     }
     
-    // Verifica se o status da reserva é "pendente" ou "confirmada"
     const validStatuses = ['pendente', 'confirmada'];
     if (!validStatuses.includes(reservation.status)) {
         throw new Error('Somente reservas com status "pendente" ou "confirmada" podem ser alteradas.');
@@ -92,7 +91,7 @@ exports.updateReservationValidation = [
     body('id_reserva')
         .notEmpty().withMessage('O ID da reserva é obrigatório.')
         .isInt().withMessage('O ID da reserva deve ser um número inteiro.')
-        .custom(existsReservation), // Verifica se a reserva existe e se o status é "pendente" ou "confirmada"
+        .custom(existsReservation),
 
     body('data_reserva')
         .optional()
@@ -146,5 +145,5 @@ exports.removeReservationValidation = [
     body('id_reserva')
         .notEmpty().withMessage('O ID da reserva é obrigatório.')
         .isInt().withMessage('O ID da reserva deve ser um número inteiro.')
-        .custom(existsReservation) // Verifica se a reserva existe
+        .custom(existsReservation)
 ];
