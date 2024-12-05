@@ -2,7 +2,7 @@ const { validationResult } = require('express-validator');
 const Group = require('../models/group');
 const User = require('../models/user');
 const createResponse = require('../utils/helpers/responseHelper');
-const { createGroupValidation, updateGroupValidation, removeGroupValidation } = require('../utils/validations/groupsValidation');
+const { createGroupValidation, updateGroupValidation, removeGroupValidation } = require('../utils/validations/groupValidation');
 
 exports.createGroup = [
   createGroupValidation,
