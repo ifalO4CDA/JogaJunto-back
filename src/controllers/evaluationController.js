@@ -1,46 +1,30 @@
 const { validationResult } = require('express-validator');
+const  Evaluation  = require('../models/evaluation'); // Modelo de Avaliação
 const createResponse = require('../utils/helpers/responseHelper');
-const { 
-  createEvaluationValidation, 
-  deleteEvaluationValidation, 
-  listCourtEvaluationsValidation 
+const {
+  createEvaluationValidation,
+  deleteEvaluationValidation,
 } = require('../utils/validations/evaluationValidation');
 
 // Criar Avaliação
 exports.createEvaluation = [
-  createEvaluationValidation, 
+  createEvaluationValidation,
   async (req, res) => {
     const { id_reserva, id_quadra, id_usuario, nota, comentario, data_avaliacao } = req.body;
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json(createResponse({
-        status: 'Erro',
-        message: 'Erro de validação.',
-        errors: errors.array(),
-      }));
+      return res.status(400).json(
+        createResponse({
+          status: 'Erro',
+          message: 'Erro de validação.',
+          errors: errors.array(),
+        })
+      );
     }
 
     try {
-      // Verifica se a reserva existe
-      const reserva = await Reserva.findByPk(id_reserva);
-      if (!reserva) {
-        return res.status(404).json(createResponse({
-          status: 'Erro',
-          message: 'Reserva não encontrada.',
-        }));
-      }
-
-      // Verifica se o usuário fez a reserva (garante que o usuário possa avaliar sua própria reserva)
-      if (reserva.id_usuario !== id_usuario) {
-        return res.status(403).json(createResponse({
-          status: 'Erro',
-          message: 'Usuário não pode avaliar uma reserva que não foi feita por ele.',
-        }));
-      }
-
-      // Criação da avaliação
-      const avaliacao = await Avaliacao.create({
+      const evaluation = await Evaluation.create({
         id_reserva,
         id_quadra,
         id_usuario,
@@ -49,19 +33,22 @@ exports.createEvaluation = [
         data_avaliacao: data_avaliacao || new Date(),
       });
 
-      return res.status(201).json(createResponse({
-        status: 'Sucesso',
-        message: 'Avaliação criada com sucesso!',
-        data: avaliacao,
-      }));
-
+      res.status(201).json(
+        createResponse({
+          status: 'Sucesso',
+          message: 'Avaliação criada com sucesso!',
+          data: { id: evaluation.id_avaliacao },
+        })
+      );
     } catch (error) {
       console.error(error);
-      return res.status(500).json(createResponse({
-        status: 'Erro',
-        message: 'Erro ao criar avaliação.',
-        errors: [error.message],
-      }));
+      res.status(500).json(
+        createResponse({
+          status: 'Erro',
+          message: 'Erro ao criar a avaliação.',
+          errors: [error.message],
+        })
+      );
     }
   }
 ];
@@ -74,97 +61,109 @@ exports.deleteEvaluation = [
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json(createResponse({
-        status: 'Erro',
-        message: 'Erro de validação.',
-        errors: errors.array(),
-      }));
+      return res.status(400).json(
+        createResponse({
+          status: 'Erro',
+          message: 'Erro de validação.',
+          errors: errors.array(),
+        })
+      );
     }
 
     try {
-      // Verifica se a avaliação existe
-      const avaliacao = await Avaliacao.findByPk(id_avaliacao);
-      if (!avaliacao) {
-        return res.status(404).json(createResponse({
-          status: 'Erro',
-          message: 'Avaliação não encontrada.',
-        }));
+      const evaluation = await Evaluation.findOne({
+        where: { id_avaliacao, id_usuario },
+      });
+
+      if (!evaluation) {
+        return res.status(404).json(
+          createResponse({
+            status: 'Erro',
+            message: 'Avaliação não encontrada ou não pertence ao usuário.',
+          })
+        );
       }
 
-      // Verifica se o usuário é o autor da avaliação
-      if (avaliacao.id_usuario !== id_usuario) {
-        return res.status(403).json(createResponse({
-          status: 'Erro',
-          message: 'Somente o autor da avaliação pode excluí-la.',
-        }));
-      }
+      await evaluation.destroy();
 
-      // Exclui a avaliação
-      await avaliacao.destroy();
-
-      return res.status(200).json(createResponse({
-        status: 'Sucesso',
-        message: 'Avaliação excluída com sucesso!',
-      }));
-
+      res.status(200).json(
+        createResponse({
+          status: 'Sucesso',
+          message: 'Avaliação excluída com sucesso!',
+          data: { id: id_avaliacao },
+        })
+      );
     } catch (error) {
       console.error(error);
-      return res.status(500).json(createResponse({
-        status: 'Erro',
-        message: 'Erro ao excluir avaliação.',
-        errors: [error.message],
-      }));
+      res.status(500).json(
+        createResponse({
+          status: 'Erro',
+          message: 'Erro ao excluir a avaliação.',
+          errors: [error.message],
+        })
+      );
     }
   }
 ];
 
 // Listar Avaliações de uma Quadra
-exports.listCourtEvaluations = [
-  listCourtEvaluationsValidation,
+exports.listEvaluationsByCourt = [
   async (req, res) => {
-    const id_quadra = req.body.id_quadra;
-
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json(createResponse({
-        status: 'Erro',
-        message: 'Erro de validação.',
-        errors: errors.array(),
-      }));
-    }
+    const  id_quadra  = req.body.id_quadra;
 
     try {
-      // Verifica se a quadra existe
-      const quadra = await Quadra.findByPk(id_quadra);
-      if (!quadra) {
-        return res.status(404).json(createResponse({
-          status: 'Erro',
-          message: 'Quadra não encontrada.',
-        }));
-      }
-
-      // Busca todas as avaliações relacionadas à quadra
-      const avaliacoes = await Avaliacao.findAll({
+      const evaluations = await Evaluation.findAll({
         where: { id_quadra },
-        include: [
-          { model: Usuario, attributes: ['id_usuario', 'nome'] }, // Inclui informações do usuário
-          { model: Reserva, attributes: ['id_reserva', 'data_reserva'] }, // Inclui informações da reserva
-        ],
+        attributes: ['id_avaliacao', 'nota', 'comentario', 'data_avaliacao', 'id_usuario', 'id_reserva'],
       });
 
-      return res.status(200).json(createResponse({
-        status: 'Sucesso',
-        message: 'Avaliações da quadra listadas com sucesso!',
-        data: avaliacoes,
-      }));
-
+      res.status(201).json(
+        createResponse({
+          status: 'Sucesso',
+          message: 'Avaliações listadas com sucesso!',
+          data: evaluations,
+        })
+      );
     } catch (error) {
       console.error(error);
-      return res.status(500).json(createResponse({
-        status: 'Erro',
-        message: 'Erro ao listar avaliações da quadra.',
-        errors: [error.message],
-      }));
+      res.status(500).json(
+        createResponse({
+          status: 'Erro',
+          message: 'Erro ao listar as avaliações.',
+          errors: [error.message],
+        })
+      );
+    }
+  }
+];
+
+// Listar Avaliações de um Usuário
+exports.listEvaluationsByUser = [
+  async (req, res) => {
+    const  id_usuario  = req.body.id_usuario;
+
+    try {
+      const evaluations = await Evaluation.findAll({
+        where: { id_usuario },
+        attributes: ['id_avaliacao', 'nota', 'comentario', 'data_avaliacao', 'id_reserva', 'id_quadra'],
+      });
+
+      res.status(201).json(
+        createResponse({
+          status: 'Sucesso',
+          message: 'Avaliações do usuário listadas com sucesso!',
+          data: evaluations,
+        })
+      );
+    } catch (error) {
+      console.error(error);
+      res.status(500).json(
+        createResponse({
+          status: 'Erro',
+          message: 'Erro ao listar as avaliações do usuário.',
+          errors: [error.message],
+        })
+      );
     }
   }
 ];

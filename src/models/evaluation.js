@@ -1,10 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const User = require('./user');  // Modelo de usuários
-const Quadra = require('./quadra');  // Modelo de quadras
-const Reserva = require('./reserva');  // Modelo de reservas
 
-const Avaliation = sequelize.define('Avaliacao', {
+const Evaluation = sequelize.define('Avaliacao', {
   id_avaliacao: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -56,23 +53,4 @@ const Avaliation = sequelize.define('Avaliacao', {
   timestamps: false,  // Não estamos usando timestamps
 });
 
-// Associações
-Avaliacao.belongsTo(User, {
-  foreignKey: 'id_usuario',
-  targetKey: 'id_usuario',
-  as: 'usuario',
-});
-
-Avaliacao.belongsTo(Quadra, {
-  foreignKey: 'id_quadra',
-  targetKey: 'id_quadra',
-  as: 'quadra',
-});
-
-Avaliacao.belongsTo(Reserva, {
-  foreignKey: 'id_reserva',
-  targetKey: 'id_reserva',
-  as: 'reserva',
-});
-
-module.exports = Avaliation;
+module.exports = Evaluation;

@@ -1,91 +1,48 @@
-const { body, param } = require('express-validator');
-const { Reserva, Quadra, Avaliacao, Usuario } = require('../../models/indexModel');
+const { body } = require('express-validator');
 
-// Validação para criação de avaliação
-exports.createEvaluationValidation = [
-  // Verifica se o ID da reserva é um número inteiro
-  body('id_reserva')
-    .isInt().withMessage('ID da reserva deve ser um número inteiro')
-    .custom(async (value) => {
-      // Verifica se a reserva existe
-      const reserva = await Reserva.findByPk(value);
-      if (!reserva) {
-        throw new Error('Reserva não encontrada');
-      }
-    }),
+const evaluationValidation = {
+  createEvaluationValidation: [
+    body('id_reserva')
+      .notEmpty().withMessage('O campo id_reserva é obrigatório.')
+      .isInt({ gt: 0 }).withMessage('O id_reserva deve ser um número inteiro válido.'),
+    body('id_quadra')
+      .notEmpty().withMessage('O campo id_quadra é obrigatório.')
+      .isInt({ gt: 0 }).withMessage('O id_quadra deve ser um número inteiro válido.'),
+    body('id_usuario')
+      .notEmpty().withMessage('O campo id_usuario é obrigatório.')
+      .isInt({ gt: 0 }).withMessage('O id_usuario deve ser um número inteiro válido.'),
+    body('nota')
+      .optional()
+      .isInt({ min: 1, max: 5 }).withMessage('A nota deve ser um número entre 1 e 5.'),
+    body('comentario')
+      .optional()
+      .isString().withMessage('O comentário deve ser um texto válido.')
+      .isLength({ max: 500 }).withMessage('O comentário não pode ter mais de 500 caracteres.'),
+    body('data_avaliacao')
+      .optional()
+      .isISO8601().withMessage('A data de avaliação deve estar no formato ISO8601.'),
+  ],
 
-  // Verifica se o ID da quadra é um número inteiro
-  body('id_quadra')
-    .isInt().withMessage('ID da quadra deve ser um número inteiro')
-    .custom(async (value) => {
-      // Verifica se a quadra existe
-      const quadra = await Quadra.findByPk(value);
-      if (!quadra) {
-        throw new Error('Quadra não encontrada');
-      }
-    }),
+  deleteEvaluationValidation: [
+    body('id_avaliacao')
+      .notEmpty().withMessage('O campo id_avaliacao é obrigatório.')
+      .isInt({ gt: 0 }).withMessage('O id_avaliacao deve ser um número inteiro válido.'),
+    body('id_usuario')
+      .notEmpty().withMessage('O campo id_usuario é obrigatório.')
+      .isInt({ gt: 0 }).withMessage('O id_usuario deve ser um número inteiro válido.'),
+  ],
 
-  // Verifica se o ID do usuário é um número inteiro
-  body('id_usuario')
-    .isInt().withMessage('ID do usuário deve ser um número inteiro')
-    .custom(async (value) => {
-      // Verifica se o usuário existe
-      const usuario = await Usuario.findByPk(value);
-      if (!usuario) {
-        throw new Error('Usuário não encontrado');
-      }
-    }),
+  listEvaluationsByCourtValidation: [
+    body('id_quadra')
+      .notEmpty().withMessage('O campo id_quadra é obrigatório.')
+      .isInt({ gt: 0 }).withMessage('O id_quadra deve ser um número inteiro válido.'),
+  ],
 
-  // Verifica se a nota é um número entre 1 e 5
-  body('nota')
-    .isInt({ min: 1, max: 5 }).withMessage('Nota deve ser um número entre 1 e 5')
-    .optional({ nullable: true }),
+  listEvaluationsByUserValidation: [
+    body('id_usuario')
+      .notEmpty().withMessage('O campo id_usuario é obrigatório.')
+      .isInt({ gt: 0 }).withMessage('O id_usuario deve ser um número inteiro válido.'),
+  ],
+};
 
-  // Verifica se o comentário é uma string válida (opcional)
-  body('comentario')
-    .isString().withMessage('Comentário deve ser uma string válida')
-    .optional({ nullable: true }),
-
-  // Garantir que a data de avaliação (caso fornecida) seja um formato de data válido
-  body('data_avaliacao')
-    .isDate().withMessage('Data de avaliação inválida')
-    .optional({ nullable: true }),
-];
-
-// Validação para exclusão de avaliação
-exports.deleteEvaluationValidation = [
-  // Verifica se o ID da avaliação é um número inteiro
-  body('id_avaliacao')
-    .isInt().withMessage('ID da avaliação deve ser um número inteiro')
-    .custom(async (value) => {
-      // Verifica se a avaliação existe
-      const avaliacao = await Avaliacao.findByPk(value);
-      if (!avaliacao) {
-        throw new Error('Avaliação não encontrada');
-      }
-    }),
-
-  // Verifica se o ID do usuário é um número inteiro e se ele é o dono da avaliação
-  body('id_usuario')
-    .isInt().withMessage('ID do usuário deve ser um número inteiro')
-    .custom(async (value, { req }) => {
-      // Verifica se o usuário existe e se é o dono da avaliação
-      const avaliacao = await Avaliacao.findByPk(req.body.id_avaliacao);
-      if (avaliacao && avaliacao.id_usuario !== value) {
-        throw new Error('Somente o autor da avaliação pode excluí-la');
-      }
-    }),
-];
-
-// Validação para listar avaliações de uma quadra
-exports.listCourtEvaluationsValidation = [
-  param('id_quadra')
-    .isInt().withMessage('ID da quadra deve ser um número inteiro')
-    .custom(async (value) => {
-      // Verifica se a quadra existe
-      const quadra = await Quadra.findByPk(value);
-      if (!quadra) {
-        throw new Error('Quadra não encontrada');
-      }
-    }),
-];
+module.exports = evaluationValidation;
