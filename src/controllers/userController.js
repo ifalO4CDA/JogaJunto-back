@@ -1,4 +1,4 @@
-const User = require('../models/user');
+const {User} = require('../models/indexModel');
 const { validationResult } = require('express-validator');
 const { createUserValidation, alterUserValidation, removeUserValidation } = require('./../utils/validations/userValidations');
 const  createResponse = require('./../utils/helpers/responseHelper');

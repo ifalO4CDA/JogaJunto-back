@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const Group = require('../models/group');  // Certifique-se de que o caminho está correto
 
 const User = sequelize.define('User', {
   id_usuario: {
