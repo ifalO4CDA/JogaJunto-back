@@ -88,3 +88,20 @@ exports.getMoreInformationsValidation = [
         .isInt().withMessage('O ID do usuário deve ser um número inteiro.')
         .custom(userExists),
 ];
+
+
+exports.updateMoreInformationsValidation = [
+    param('id')
+        .notEmpty().withMessage('O ID do usuário é obrigatório.')
+        .isInt().withMessage('O ID do usuário deve ser um número inteiro.')
+        .custom(userExists),
+    body('documento_oficial')
+        .trim().escape().notEmpty().withMessage('O documento oficial é obrigatório.'),
+    body('data_nascimento')
+        .trim().escape().notEmpty().withMessage('A data de nascimento é obrigatória.')
+        .custom(birthDateValidation),
+    body('cpf')
+        .notEmpty().withMessage('O CPF é obrigatório.')
+        .trim().escape()
+        .custom(cpfValidation),
+]
