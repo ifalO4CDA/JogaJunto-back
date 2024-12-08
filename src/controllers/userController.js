@@ -1,7 +1,9 @@
-const {User} = require('../models/indexModel');
+const { User } = require('../models/indexModel');
 const { validationResult } = require('express-validator');
 const { createUserValidation, alterUserValidation, removeUserValidation } = require('./../utils/validations/userValidations');
-const  createResponse = require('./../utils/helpers/responseHelper');
+const MoreInformation = require('./../models/moreInformation');
+
+const createResponse = require('./../utils/helpers/responseHelper');
 exports.createUser = [
   createUserValidation,
   async (req, res) => {
@@ -23,7 +25,7 @@ exports.createUser = [
       createResponse({
         status: 'Sucesso',
         message: 'Usuário cadastrado com sucesso!',
-        data: {"id": user["id_usuario"]}
+        data: { "id": user["id_usuario"] }
       })
     );
   },
@@ -40,7 +42,6 @@ exports.getUsers = async (req, res) => {
 
 exports.removeUser = [
   removeUserValidation,
-
   async (req, res) => {
     const userID = req.params.id;
 
@@ -55,12 +56,28 @@ exports.removeUser = [
       );
     }
 
+    try {
+      const moreInformations = await MoreInformation.findByPk(userID);
+      if (moreInformations) {
+        await MoreInformation.destroy({ where: { id_usuario: userID } });
+      }
+    } catch (error) {
+      return res.status(500).json(
+        createResponse({
+          status: 'Erro',
+          message: 'Erro ao remover informações adicionais do usuário.',
+          errors: error
+        })
+      );
+    }
+
     const user = await User.destroy({ where: { id_usuario: userID } });
+
     res.status(201).json(
       createResponse({
         status: 'Sucesso',
         message: 'Usuário removido com sucesso!',
-        data: {"id": userID}
+        data: { "id": userID }
       })
     );
   }
@@ -82,7 +99,7 @@ exports.alterUser = [
         })
       );
     }
-    
+
     const user = await User.update(
       { nome, sobrenome, email, senha },
       { where: { id_usuario: userID } }
@@ -91,7 +108,7 @@ exports.alterUser = [
       createResponse({
         status: 'Sucesso',
         message: 'Usuário alterado com sucesso!',
-        data: {"id": userID}
+        data: { "id": userID }
       })
     );
   }
