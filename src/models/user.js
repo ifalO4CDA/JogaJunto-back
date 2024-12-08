@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const Group = require('../models/group');  // Certifique-se de que o caminho está correto
+const Address = require('../models/address');
 
 const User = sequelize.define('User', {
   id_usuario: {
@@ -40,5 +41,6 @@ const User = sequelize.define('User', {
   tableName: 'usuarios',
   timestamps: false,
 });
+
 
 module.exports = User;

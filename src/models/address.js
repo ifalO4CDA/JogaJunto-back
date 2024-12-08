@@ -7,10 +7,6 @@ const Address = sequelize.define('Address', {
     primaryKey: true,
     autoIncrement: true,
   },
-  id_usuario: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
   logradouro: {
     type: DataTypes.STRING,
     allowNull: false,
