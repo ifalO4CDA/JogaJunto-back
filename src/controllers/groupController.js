@@ -1,6 +1,7 @@
 const { validationResult } = require('express-validator');
 const {Group, User} = require('../models/indexModel');
 const createResponse = require('../utils/helpers/responseHelper');
+const { Op } = require('sequelize');
 const { createGroupValidation, updateGroupValidation, removeGroupValidation } = require('../utils/validations/groupValidation');
 
 exports.createGroup = [
@@ -176,28 +177,114 @@ exports.listAllGroups = [
 
 exports.listUserGroups = [
   async (req, res) => {
-    const id_usuario = req.body.id_usuario;
+    const id_usuario = Number(req.body.id_usuario);
+
+    if (!id_usuario) {
+      return res.status(400).json({
+        status: 'Erro',
+        message: 'ID do usuário é obrigatório.',
+      });
+    }
+
+    console.log('ID do usuário recebido:', id_usuario);
 
     try {
-      const groups = await Group.findAll({ where: { id_criador: id_usuario } });
+      const groups = await Group.findAll({
+        where: {
+          [Op.or]: [
+            { id_criador: id_usuario }, // Usuário é o criador
+            {
+              '$Users.id_usuario$': id_usuario, // Usuário está na tabela intermediária
+            },
+          ],
+        },
+        include: [
+          {
+            model: User,
+            through: { attributes: [] }, // Exclui dados da tabela intermediária
+            attributes: [], // Exclui os dados do usuário na resposta
+          },
+        ],
+      });
+
+      if (!groups.length) {
+        return res.status(404).json({
+          status: 'Erro',
+          message: 'O usuário não participa de nenhum grupo.',
+        });
+      }
+
+      res.status(200).json({
+        status: 'Sucesso',
+        message: 'Grupos do usuário listados com sucesso!',
+        data: groups,
+      });
+    } catch (error) {
+      console.error('Erro ao listar grupos:', error);
+
+      res.status(500).json({
+        status: 'Erro',
+        message: 'Erro ao listar os grupos do usuário.',
+        errors: [error.message],
+      });
+    }
+  },
+];
+
+exports.listGroupMembers = [
+  async (req, res) => {
+    const  id_grupo  = req.body.id_grupo;
+
+    if (!id_grupo) {
+      return res.status(400).json(
+        createResponse({
+          status: 'Erro',
+          message: 'O ID do grupo é obrigatório.',
+        })
+      );
+    }
+
+    try {
+      // Buscar o grupo e incluir os membros
+      const group = await Group.findByPk(id_grupo, {
+        include: [
+          {
+            model: User,
+            through: { attributes: [] }, // Exclui campos da tabela intermediária
+            attributes: ['id_usuario', 'nome', 'sobrenome', 'email', 'foto_perfil'], // Retorna apenas campos necessários
+          },
+        ],
+      });
+
+      if (!group) {
+        return res.status(404).json(
+          createResponse({
+            status: 'Erro',
+            message: 'Grupo não encontrado.',
+          })
+        );
+      }
+
+      // Retornar os membros do grupo
       res.status(200).json(
         createResponse({
           status: 'Sucesso',
-          message: 'Grupos do usuário listados com sucesso!',
-          data: groups,
+          message: 'Membros do grupo listados com sucesso!',
+          data: group.Users, // Os membros do grupo estão na propriedade `Users`
         })
       );
     } catch (error) {
-      console.error(error);
+      console.error('Erro ao listar membros do grupo:', error);
+
       res.status(500).json(
         createResponse({
           status: 'Erro',
-          message: 'Erro ao listar os grupos do usuário.',
+          message: 'Erro ao listar os membros do grupo.',
           errors: [error.message],
         })
       );
     }
-  }
+  },
 ];
 
 exports.addRemoveGroupMember = [
