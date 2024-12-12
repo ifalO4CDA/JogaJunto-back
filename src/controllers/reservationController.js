@@ -6,7 +6,7 @@ const createResponse = require('./../utils/helpers/responseHelper');
 exports.CreateReservation = [
   createReservationValidation,
   async (req, res) => {
-    const { id_usuario, id_quadra, id_grupo, data_reserva, horario_inicio, horario_fim, status, valor_total, ativo, motivo_cancelamento } = req.body;
+    const { id_quadra, data_reserva, horario_inicio, horario_fim, status, valor_total, ativo, motivo_cancelamento, id_sala } = req.body;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json(createResponse({
@@ -17,7 +17,7 @@ exports.CreateReservation = [
       );
     }
 
-    const reservation = await Reservation.create({ id_usuario, id_quadra, id_grupo, data_reserva, horario_inicio, horario_fim, status, valor_total, ativo, motivo_cancelamento });
+    const reservation = await Reservation.create({ id_quadra, data_reserva, horario_inicio, horario_fim, status, valor_total, ativo, motivo_cancelamento, id_sala });
     res.status(201).json(createResponse({
       status: 'Sucesso',
       message: 'Reserva feita com sucesso!',

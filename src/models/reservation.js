@@ -1,23 +1,15 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const Reservation = sequelize.define("Reservation", {
+const Reservation = sequelize.define("Reservas", {
   id_reserva: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true,
   },
-  id_usuario: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
   id_quadra: {
     type: DataTypes.INTEGER,
     allowNull: false,
-  },
-  id_grupo: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
   },
   data_reserva: {
     type: DataTypes.DATEONLY,
@@ -46,8 +38,12 @@ const Reservation = sequelize.define("Reservation", {
   motivo_cancelamento: {
     type: DataTypes.STRING,
     allowNull: true,
+  },
+  id_sala: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
   }
-}, {
+},{
   tableName: "reservas",
   schema: "joga_junto_schema",
   timestamps: false,

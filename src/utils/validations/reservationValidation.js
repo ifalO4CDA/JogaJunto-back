@@ -26,11 +26,6 @@ const existsUser = async (id_usuario) => {
 };
 
 exports.createReservationValidation = [
-    body('id_usuario')
-        .notEmpty().withMessage('O ID do usuário é obrigatório.')
-        .isInt().withMessage('O ID do usuário deve ser um número inteiro.')
-        .custom(existsUser),  // Verifica se o usuário existe
-
     body('id_quadra')
         .notEmpty().withMessage('O ID da quadra é obrigatório.')
         .isInt().withMessage('O ID da quadra deve ser um número inteiro.'),
