@@ -24,7 +24,7 @@ app.use('/api/moreInformations', moreInformationsRoutes);
 app.use('/api/reservation', reservationRoutes);
 app.use('/api/group', groupRoutes);
 app.use('/api/evaluation', evaluationRoutes);
-
+app.use('/api/rooms/', require('./routes/roomRoutes'));
 
 // Inicializa o servidor
 app.listen(port, () => {
