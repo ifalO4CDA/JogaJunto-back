@@ -4,7 +4,6 @@ const express = require('express');
 const userRoutes = require('./routes/userRoutes');
 const addressRoutes = require('./routes/addressRoutes');
 const moreInformationsRoutes = require('./routes/moreInformationsRoutes');
-require('./models/associations'); // Carrega os relacionamentos
 
 const reservationRoutes = require('./routes/reservationRoutes');
 const groupRoutes = require('./routes/groupRoutes');

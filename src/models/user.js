@@ -55,8 +55,6 @@ User.associate = (models) => {
     foreignKey: 'id_endereco',
     as: 'endereco', // Alias utilizado na busca
   });
-  User.belongsToMany(models.Room, { through: models.RoomMember, foreignKey: 'id_usuario', as: 'salas' });
-
 };
 
 
