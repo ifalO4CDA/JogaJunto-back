@@ -69,6 +69,12 @@ User.associate = (models) => {
     otherKey: 'id_sala',
     as: 'salas',
   });
+
+  User.hasMany(models.Court, {
+    foreignKey: 'id_proprietario',
+    as: 'quadras', // Relacionamento com as quadras
+  });
+
 };
 
 

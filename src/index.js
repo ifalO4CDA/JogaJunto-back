@@ -8,6 +8,7 @@ const moreInformationsRoutes = require('./routes/moreInformationsRoutes');
 const reservationRoutes = require('./routes/reservationRoutes');
 const groupRoutes = require('./routes/groupRoutes');
 const evaluationRoutes = require('./routes/evaluationRoutes');
+const courtRoutes = require('./routes/courtRoutes');
 const app = express();
 const port = process.env.PORT || 3030;
 
@@ -24,6 +25,7 @@ app.use('/api/reservation', reservationRoutes);
 app.use('/api/group', groupRoutes);
 app.use('/api/evaluation', evaluationRoutes);
 app.use('/api/rooms/', require('./routes/roomRoutes'));
+app.use('/api/courts', courtRoutes);
 
 // Inicializa o servidor
 app.listen(port, () => {

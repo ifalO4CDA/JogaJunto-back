@@ -14,4 +14,6 @@ router.delete('/', GroupsController.deleteGroup); // Excluir grupo
 router.post('/membro', GroupsController.addRemoveGroupMember); // Adicionar/Remover membros
 router.get('/grupoMembros/:id', GroupsController.listGroupMembers);
 
+router.get('/:id', GroupsController.getGroup); // Listar um grupo
+
 module.exports = router;

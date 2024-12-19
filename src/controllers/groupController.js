@@ -348,3 +348,40 @@ exports.addRemoveGroupMember = [
     }
   }
 ];
+
+// Obetendo informações de um grupo
+
+exports.getGroup = [
+  async (req, res) => {
+    const id_grupo = req.params.id;
+
+    try {
+      const group = await Group.findByPk(id_grupo);
+      if (!group) {
+        return res.status(404).json(
+          createResponse({
+            status: 'Erro',
+            message: 'Grupo não encontrado.',
+          })
+        );
+      }
+
+      res.status(200).json(
+        createResponse({
+          status: 'Sucesso',
+          message: 'Grupo encontrado com sucesso!',
+          data: group,
+        })
+      );
+    } catch (error) {
+      console.error(error);
+      res.status(500).json(
+        createResponse({
+          status: 'Erro',
+          message: 'Erro ao buscar o grupo.',
+          errors: [error.message],
+        })
+      );
+    }
+  }
+];

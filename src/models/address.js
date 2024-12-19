@@ -52,6 +52,12 @@ Address.associate = (models) => {
     foreignKey: 'id_endereco',
     as: 'usuario', // Alias para o lado inverso da relação
   });
+
+
+  Address.hasMany(models.Court, {
+    foreignKey: 'id_endereco',
+    as: 'quadras', // Relacionamento com quadras
+  });
 };
 
 
