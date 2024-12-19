@@ -1,6 +1,7 @@
 const { validationResult } = require('express-validator');
 const { User, Address } = require('../models/indexModel');
 const createResponse = require('./../utils/helpers/responseHelper');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 exports.createUser = [
     async (req, res) => {
@@ -18,12 +19,15 @@ exports.createUser = [
         }
 
         try {
-            // Criar o usuário (sem endereço, já que ele pode ser adicionado depois)
+
+            // Criptografar a senha
+            const hashedPassword = await bcrypt.hash(senha, 10);
+
             const user = await User.create({
                 nome,
                 sobrenome,
                 email,
-                senha: await bcrypt.hash(senha, 10),
+                senha: hashedPassword,
             });
 
             res.status(201).json(
@@ -205,7 +209,9 @@ exports.login = async (req, res) => {
         }
 
         // Verificar a senha
-        const isPasswordValid = senha === user.senha;
+        console.log('senha', senha);
+        console.log('user.senha', user.senha);
+        const isPasswordValid = await bcrypt.compare(senha, user.senha);
         if (!isPasswordValid) {
             return res.status(401).json(
                 createResponse({
@@ -219,7 +225,7 @@ exports.login = async (req, res) => {
         const token = jwt.sign(
             { id_usuario: user.id_usuario, email: user.email },
             process.env.JWT_SECRET || 'seu-segredo-jwt',
-            { expiresIn: '2h' } // Token expira em 2 horas
+            { expiresIn: '1h' } // Token expira em 2 horas
         );
 
 
