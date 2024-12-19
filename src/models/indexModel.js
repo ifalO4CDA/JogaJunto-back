@@ -2,7 +2,8 @@ const MemberGroup = require('../models/groupMember');
 const Group = require('./group');
 const User = require('./user');
 const Address = require('./address');
-
+const Room = require('./room');
+const RoomMember = require('./roomMember');
 
 User.belongsToMany(Group, {
   through: MemberGroup,
@@ -16,12 +17,16 @@ Group.belongsToMany(User, {
   otherKey: 'id_usuario',
 });
 
-User.associate({ Address });
-Address.associate({ User });
-
+// Configuração das associações
+User.associate({ Room, Group, RoomMember, Address });
+Room.associate({ User, Group, RoomMember });
+Group.associate({ User, Room, MemberGroup });
+RoomMember.associate({ User, Room });
 
 module.exports = {
+  Room,
   User,
   Group,
   Address,
+  RoomMember 
 }

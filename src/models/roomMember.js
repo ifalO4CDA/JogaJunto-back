@@ -6,7 +6,7 @@ const RoomMember = sequelize.define('RoomMember', {
     type: DataTypes.INTEGER,
     primaryKey: true,
     references: {
-      model: 'salas', // Nome da tabela de salas
+      model: 'salas', // Certifique-se de que esta tabela existe
       key: 'id_sala',
     },
     onUpdate: 'CASCADE',
@@ -16,7 +16,7 @@ const RoomMember = sequelize.define('RoomMember', {
     type: DataTypes.INTEGER,
     primaryKey: true,
     references: {
-      model: 'usuarios', // Nome da tabela de usuários
+      model: 'usuarios', // Certifique-se de que esta tabela existe
       key: 'id_usuario',
     },
     onUpdate: 'CASCADE',
@@ -29,7 +29,13 @@ const RoomMember = sequelize.define('RoomMember', {
 }, {
   schema: 'joga_junto_schema',
   tableName: 'membros_sala',
-  timestamps: false, // Não usaremos createdAt e updatedAt
+  timestamps: false, // Não usar createdAt e updatedAt
 });
 
+RoomMember.associate = (models) => {
+  RoomMember.belongsTo(models.User, {
+    foreignKey: 'id_usuario',
+    as: 'usuario',
+  });
+};
 module.exports = RoomMember;

@@ -50,10 +50,24 @@ const User = sequelize.define('User', {
   timestamps: false,
 });
 
+// User.associate = (models) => {
+//   User.belongsTo(models.Address, {
+//     foreignKey: 'id_endereco',
+//     as: 'endereco', // Alias utilizado na busca
+//   });
+// };
+
 User.associate = (models) => {
   User.belongsTo(models.Address, {
     foreignKey: 'id_endereco',
-    as: 'endereco', // Alias utilizado na busca
+    as: 'endereco',
+  });
+
+  User.belongsToMany(models.Room, {
+    through: models.RoomMember, // Tabela intermediária
+    foreignKey: 'id_usuario',
+    otherKey: 'id_sala',
+    as: 'salas',
   });
 };
 

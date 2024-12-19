@@ -18,4 +18,6 @@ router.put('/:id', updateRoomValidation, roomController.updateRoom);
 router.delete('/:id_sala/members', roomController.removeMemberFromRoom);
 router.delete('/:id', deleteRoomValidation, roomController.deleteRoom);
 
+router.get('/:id_sala/users', roomController.getUsersOfRoom); // Obter usuários de uma sala
+
 module.exports = router;

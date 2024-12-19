@@ -1,360 +1,336 @@
 const { validationResult } = require('express-validator');
-const { Room, User, Group } = require('../models/indexModel');
-const createResponse = require('./../utils/helpers/responseHelper');
+const { Room, User, Group, RoomMember } = require('../models/indexModel');
+const createResponse = require('../utils/helpers/responseHelper');
 
-
+// Criar sala
 exports.createRoom = async (req, res) => {
-    const { reserva_ativa, privada, id_usuario, id_grupo, max_integrantes } = req.body;
-
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json(
-            createResponse({
-                status: 'Erro',
-                message: 'Erro de validação.',
-                errors: errors.array(),
-            })
+        return res.status(400).json(createResponse({
+            status: 'Erro',
+            message: 'Erro de validação.',
+            errors: errors.array(),
+        })
         );
     }
+
+    const { reserva_ativa, privada, id_usuario, id_grupo, max_integrantes } = req.body;
 
     try {
         // Verificar se o usuário existe
         if (id_usuario) {
             const user = await User.findByPk(id_usuario);
             if (!user) {
-                return res.status(404).json(
-                    createResponse({
-                        status: 'Erro',
-                        message: 'Usuário não encontrado.',
-                    })
-                );
+                return res.status(404).json({ status: 'Erro', message: 'Usuário não encontrado.' });
+            }
+        }
+
+        // Verificar se o grupo existe (caso fornecido)
+        if (id_grupo) {
+            const group = await Group.findByPk(id_grupo);
+            if (!group) {
+                return res.status(404).json({ status: 'Erro', message: 'Grupo não encontrado.' });
             }
         }
 
         // Criar a sala
         const room = await Room.create({
-            reserva_ativa: reserva_ativa || true,
-            privada: privada || false,
+            reserva_ativa: reserva_ativa ?? true,
+            privada: privada ?? false,
             id_usuario: id_usuario || null,
-            id_grupo: id_grupo || null,
+            id_grupo: id_grupo || null, // Permitir null aqui
             max_integrantes: max_integrantes || 10,
             qtd_atual_integrantes: 0,
         });
 
-        return res.status(201).json(
-            createResponse({
-                status: 'Sucesso',
-                message: 'Sala criada com sucesso!',
-                data: room,
-            })
-        );
+        return res.status(201).json({
+            status: 'Sucesso',
+            message: 'Sala criada com sucesso!',
+            data: room,
+        });
     } catch (error) {
         console.error('Erro ao criar sala:', error);
-        return res.status(500).json(
-            createResponse({
-                status: 'Erro',
-                message: 'Erro ao criar sala.',
-                errors: [error.message],
-            })
-        );
+        return res.status(500).json({ status: 'Erro', message: 'Erro ao criar sala.', error: error.message });
     }
 };
-
-// Listar todas as salas
+// Listar salas
 exports.getRooms = async (req, res) => {
     try {
         const rooms = await Room.findAll({
             include: [
-                { model: User, as: 'creator', attributes: ['id_usuario', 'nome', 'email'] },
-                { model: Group, as: 'group', attributes: ['id_grupo', 'nome'] },
+                { model: User, as: 'criador', attributes: ['id_usuario', 'nome', 'email'] },
+                { model: Group, as: 'grupo', attributes: ['id_grupo', 'nome_grupo'] },
             ],
         });
+
+        return res.status(200).json({
+            status: 'Sucesso',
+            message: 'Salas listadas com sucesso!',
+            data: rooms,
+        });
+    } catch (error) {
+        console.error('Erro ao buscar salas:', error);
+        return res.status(500).json({ status: 'Erro', message: 'Erro ao buscar salas.', error: error.message });
+    }
+};
+
+// Buscar sala por ID
+exports.getRoomById = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const room = await Room.findByPk(id, {
+            include: [
+                { model: User, as: 'criador', attributes: ['id_usuario', 'nome', 'email'] },
+                { model: Group, as: 'grupo', attributes: ['id_grupo', 'nome_grupo'] },
+            ],
+        });
+
+        if (!room) {
+            return res.status(404).json({ status: 'Erro', message: 'Sala não encontrada.' });
+        }
+
+        return res.status(200).json({
+            status: 'Sucesso',
+            message: 'Sala encontrada com sucesso!',
+            data: room,
+        });
+    } catch (error) {
+        console.error('Erro ao buscar sala:', error);
+        return res.status(500).json({ status: 'Erro', message: 'Erro ao buscar sala.', error: error.message });
+    }
+};
+
+// Listar salas de um usuário
+exports.getRoomsOfUser = async (req, res) => {
+    const { id_usuario } = req.params;
+
+    try {
+        // Buscar as salas do usuário
+        const rooms = await Room.findAll({
+            where: { id_usuario }, // Filtrar diretamente pelo ID do usuário
+            include: [
+                { model: Group, as: 'grupo', attributes: ['id_grupo', 'nome_grupo'] },
+            ],
+            attributes: ['id_sala', 'reserva_ativa', 'privada', 'max_integrantes', 'qtd_atual_integrantes'], // Apenas atributos necessários
+        });
+
+        if (rooms.length === 0) {
+            return res.status(404).json(
+                createResponse({
+                    status: 'Erro',
+                    message: 'Nenhuma sala encontrada para este usuário.',
+                })
+            );
+        }
 
         return res.status(200).json(
             createResponse({
                 status: 'Sucesso',
-                message: 'Salas listadas com sucesso!',
+                message: 'Salas do usuário listadas com sucesso!',
                 data: rooms,
             })
         );
     } catch (error) {
-        console.error('Erro ao buscar salas:', error);
+        console.error('Erro ao buscar salas do usuário:', error);
         return res.status(500).json(
             createResponse({
                 status: 'Erro',
-                message: 'Erro ao buscar salas.',
-                errors: [error.message],
+                message: 'Erro ao buscar salas do usuário.',
+                errors: [{ msg: error.message }],
             })
         );
     }
 };
 
-// Buscar uma sala pelo ID
-exports.getRoomById = async (req, res) => {
-    const roomId = req.params.id;
-
-    try {
-        const room = await Room.findByPk(roomId, {
-            include: [
-                { model: User, as: 'creator', attributes: ['id_usuario', 'nome', 'email'] },
-                { model: Group, as: 'group', attributes: ['id_grupo', 'nome'] },
-            ],
-        });
-
-        if (!room) {
-            return res.status(404).json(
-                createResponse({
-                    status: 'Erro',
-                    message: 'Sala não encontrada.',
-                })
-            );
-        }
-
-        return res.status(200).json(
-            createResponse({
-                status: 'Sucesso',
-                message: 'Sala encontrada com sucesso!',
-                data: room,
-            })
-        );
-    } catch (error) {
-        console.error('Erro ao buscar sala:', error);
-        return res.status(500).json(
-            createResponse({
-                status: 'Erro',
-                message: 'Erro ao buscar sala.',
-                errors: [error.message],
-            })
-        );
-    }
-};
-
-// Atualizar uma sala
+// Atualizar sala
 exports.updateRoom = async (req, res) => {
-    const roomId = req.params.id;
+    const { id } = req.params;
     const { reserva_ativa, privada, max_integrantes } = req.body;
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json(
-            createResponse({
-                status: 'Erro',
-                message: 'Erro de validação.',
-                errors: errors.array(),
-            })
-        );
+        return res.status(400).json({
+            status: 'Erro',
+            message: 'Erro de validação.',
+            errors: errors.array(),
+        });
     }
 
     try {
-        const room = await Room.findByPk(roomId);
+        const room = await Room.findByPk(id);
 
         if (!room) {
-            return res.status(404).json(
-                createResponse({
-                    status: 'Erro',
-                    message: 'Sala não encontrada.',
-                })
-            );
+            return res.status(404).json({ status: 'Erro', message: 'Sala não encontrada.' });
         }
 
-        // Atualizar a sala
         await room.update({
             reserva_ativa,
             privada,
             max_integrantes,
         });
 
-        return res.status(200).json(
-            createResponse({
-                status: 'Sucesso',
-                message: 'Sala atualizada com sucesso!',
-                data: room,
-            })
-        );
+        return res.status(200).json({
+            status: 'Sucesso',
+            message: 'Sala atualizada com sucesso!',
+            data: room,
+        });
     } catch (error) {
         console.error('Erro ao atualizar sala:', error);
-        return res.status(500).json(
-            createResponse({
-                status: 'Erro',
-                message: 'Erro ao atualizar sala.',
-                errors: [error.message],
-            })
-        );
+        return res.status(500).json({ status: 'Erro', message: 'Erro ao atualizar sala.', error: error.message });
     }
 };
 
-// Remover uma sala
+// Remover sala
 exports.deleteRoom = async (req, res) => {
-    const roomId = req.params.id;
+    const { id } = req.params;
 
     try {
-        const room = await Room.findByPk(roomId);
+        const room = await Room.findByPk(id);
 
         if (!room) {
-            return res.status(404).json(
-                createResponse({
-                    status: 'Erro',
-                    message: 'Sala não encontrada.',
-                })
-            );
+            return res.status(404).json({ status: 'Erro', message: 'Sala não encontrada.' });
         }
 
-        // Remover a sala
-        await Room.destroy({ where: { id_sala: roomId } });
+        await Room.destroy({ where: { id_sala: id } });
 
-        return res.status(200).json(
-            createResponse({
-                status: 'Sucesso',
-                message: 'Sala removida com sucesso!',
-                data: { id: roomId },
-            })
-        );
+        return res.status(200).json({
+            status: 'Sucesso',
+            message: 'Sala removida com sucesso!',
+        });
     } catch (error) {
         console.error('Erro ao remover sala:', error);
-        return res.status(500).json(
-            createResponse({
+        return res.status(500).json({ status: 'Erro', message: 'Erro ao remover sala.', error: error.message });
+    }
+};
+
+// Adicionar membro à sala
+exports.addMemberToRoom = async (req, res) => {
+    const { id_sala } = req.params;
+    const { id_usuario } = req.body;
+
+    try {
+        // Verificar se a sala existe
+        const room = await Room.findByPk(id_sala);
+        if (!room) {
+            return res.status(404).json({ status: 'Erro', message: 'Sala não encontrada.' });
+        }
+
+        // Verificar se o usuário existe
+        const user = await User.findByPk(id_usuario);
+        if (!user) {
+            return res.status(404).json({ status: 'Erro', message: 'Usuário não encontrado.' });
+        }
+
+        // Verificar limite de integrantes
+        if (room.qtd_atual_integrantes >= room.max_integrantes) {
+            return res.status(400).json({ status: 'Erro', message: 'A sala atingiu o limite máximo de integrantes.' });
+        }
+
+        // Verificar se o usuário já é membro da sala
+        const existingMember = await RoomMember.findOne({ where: { id_sala, id_usuario } });
+        if (existingMember) {
+            return res.status(400).json({ status: 'Erro', message: 'Usuário já é membro da sala.' });
+        }
+
+        // Adicionar o membro
+        await RoomMember.create({ id_sala, id_usuario });
+
+        // Incrementar a quantidade de integrantes
+        room.qtd_atual_integrantes += 1;
+        await room.save();
+
+        return res.status(200).json({
+            status: 'Sucesso',
+            message: 'Usuário adicionado à sala com sucesso!',
+        });
+    } catch (error) {
+        console.error('Erro ao adicionar membro à sala:', error);
+        return res.status(500).json({
+            status: 'Erro',
+            message: 'Erro ao adicionar membro à sala.',
+            error: error.message,
+        });
+    }
+};
+exports.getUsersOfRoom = async (req, res) => {
+    const { id_sala } = req.params;
+
+    try {
+        // Verificar se a sala existe
+        const room = await Room.findByPk(id_sala);
+        if (!room) {
+            return res.status(404).json({
                 status: 'Erro',
-                message: 'Erro ao remover sala.',
-                errors: [error.message],
-            })
-        );
+                message: 'Sala não encontrada.',
+            });
+        }
+
+        // Obter os usuários da sala
+        const roomMembers = await RoomMember.findAll({
+            where: { id_sala },
+            include: [
+                {
+                    model: User,
+                    as: 'usuario', // Alias definido no relacionamento
+                    attributes: ['id_usuario', 'nome', 'email'],
+                },
+            ],
+        });
+
+        // Extrair apenas os dados dos usuários
+        const users = roomMembers.map((member) => member.usuario);
+
+        return res.status(200).json({
+            status: 'Sucesso',
+            message: 'Usuários da sala listados com sucesso!',
+            data: users, // Retorna apenas os usuários
+        });
+    } catch (error) {
+        console.error('Erro ao obter usuários da sala:', error);
+        return res.status(500).json({
+            status: 'Erro',
+            message: 'Erro ao obter usuários da sala.',
+            error: error.message,
+        });
     }
 };
 
 
-exports.addMemberToRoom = async (req, res) => {
-  const { id_usuario } = req.body; // ID do usuário a ser adicionado
-  const { id_sala } = req.params; // ID da sala
-
-  try {
-      // Verificar se a sala existe
-      const sala = await Room.findByPk(id_sala);
-      if (!sala) {
-          return res.status(404).json({
-              status: 'Erro',
-              message: 'Sala não encontrada.',
-          });
-      }
-
-      // Verificar se o usuário existe
-      const user = await User.findByPk(id_usuario);
-      if (!user) {
-          return res.status(404).json({
-              status: 'Erro',
-              message: 'Usuário não encontrado.',
-          });
-      }
-
-      // Adicionar o membro à sala
-      await Room.addMembro(user); // Alias `membros` configurado na associação
-
-      // Incrementar a quantidade de integrantes na sala
-      sala.qtd_atual_integrantes += 1;
-      await sala.save();
-
-      return res.status(200).json({
-          status: 'Sucesso',
-          message: 'Membro adicionado à sala com sucesso!',
-          data: { id_sala, id_usuario },
-      });
-  } catch (error) {
-      console.error('Erro ao adicionar membro à sala:', error);
-      return res.status(500).json({
-          status: 'Erro',
-          message: 'Erro ao adicionar membro à sala.',
-          errors: [error.message],
-      });
-  }
-};
-
+// Remover membro da sala
 exports.removeMemberFromRoom = async (req, res) => {
-  const { id_usuario } = req.body; // ID do usuário a ser removido
-  const { id_sala } = req.params; // ID da sala
+    const { id_sala } = req.params;
+    const { id_usuario } = req.body;
 
-  try {
-      // Verificar se a sala existe
-      const room = await Room.findByPk(id_sala);
-      if (!room) {
-          return res.status(404).json(
-              createResponse({
-                  status: 'Erro',
-                  message: 'Sala não encontrada.',
-              })
-          );
-      }
+    try {
+        const room = await Room.findByPk(id_sala);
+        if (!room) {
+            return res.status(404).json({ status: 'Erro', message: 'Sala não encontrada.' });
+        }
 
-      // Verificar se o usuário existe
-      const user = await User.findByPk(id_usuario);
-      if (!user) {
-          return res.status(404).json(
-              createResponse({
-                  status: 'Erro',
-                  message: 'Usuário não encontrado.',
-              })
-          );
-      }
+        const user = await User.findByPk(id_usuario);
+        if (!user) {
+            return res.status(404).json({ status: 'Erro', message: 'Usuário não encontrado.' });
+        }
 
-      // Remover o membro da sala
-      await room.removeMember(user);
-      room.qtd_atual_integrantes -= 1;
-      await room.save();
+        // Verificar se é membro
+        const member = await RoomMember.findOne({ where: { id_sala, id_usuario } });
+        if (!member) {
+            return res.status(400).json({ status: 'Erro', message: 'Usuário não é membro da sala.' });
+        }
 
-      return res.status(200).json(
-          createResponse({
-              status: 'Sucesso',
-              message: 'Membro removido da sala com sucesso!',
-              data: { id_sala: id_sala, id_usuario: id_usuario },
-          })
-      );
-  } catch (error) {
-      console.error('Erro ao remover membro da sala:', error);
-      return res.status(500).json(
-          createResponse({
-              status: 'Erro',
-              message: 'Erro ao remover membro da sala.',
-              errors: [error.message],
-          })
-      );
-  }
-};
+        // Remover membro
+        await RoomMember.destroy({ where: { id_sala, id_usuario } });
 
-exports.getRoomsOfUser = async (req, res) => {
-  const { id_usuario } = req.params; // ID do usuário
+        room.qtd_atual_integrantes -= 1;
+        await room.save();
 
-  try {
-      // Buscar as salas do usuário
-      const rooms = await Room.findAll({
-          include: {
-              model: User,
-              as: 'members',
-              where: { id_usuario: id_usuario }, // Condição para pegar somente as salas do usuário
-          },
-      });
-
-      if (rooms.length === 0) {
-          return res.status(404).json(
-              createResponse({
-                  status: 'Erro',
-                  message: 'Nenhuma sala encontrada para esse usuário.',
-              })
-          );
-      }
-
-      return res.status(200).json(
-          createResponse({
-              status: 'Sucesso',
-              message: 'Salas listadas com sucesso!',
-              data: rooms,
-          })
-      );
-  } catch (error) {
-      console.error('Erro ao buscar salas do usuário:', error);
-      return res.status(500).json(
-          createResponse({
-              status: 'Erro',
-              message: 'Erro ao buscar salas do usuário.',
-              errors: [error.message],
-          })
-      );
-  }
+        return res.status(200).json({
+            status: 'Sucesso',
+            message: 'Usuário removido da sala com sucesso!',
+        });
+    } catch (error) {
+        console.error('Erro ao remover membro da sala:', error);
+        return res.status(500).json({ status: 'Erro', message: 'Erro ao remover membro da sala.', error: error.message });
+    }
 };
