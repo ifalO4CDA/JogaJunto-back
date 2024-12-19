@@ -177,7 +177,7 @@ exports.listAllGroups = [
 
 exports.listUserGroups = [
   async (req, res) => {
-    const id_usuario = Number(req.body.id_usuario);
+    const id_usuario = Number(req.params.id);
 
     if (!id_usuario) {
       return res.status(400).json({
@@ -186,23 +186,19 @@ exports.listUserGroups = [
       });
     }
 
-    console.log('ID do usuário recebido:', id_usuario);
-
     try {
       const groups = await Group.findAll({
         where: {
           [Op.or]: [
             { id_criador: id_usuario }, // Usuário é o criador
-            {
-              '$Users.id_usuario$': id_usuario, // Usuário está na tabela intermediária
-            },
+            { '$Users.id_usuario$': id_usuario }, // Usuário está na tabela intermediária
           ],
         },
         include: [
           {
             model: User,
-            through: { attributes: [] }, // Exclui dados da tabela intermediária
-            attributes: [], // Exclui os dados do usuário na resposta
+            through: { attributes: [] },
+            attributes: [],
           },
         ],
       });
@@ -220,8 +216,6 @@ exports.listUserGroups = [
         data: groups,
       });
     } catch (error) {
-      console.error('Erro ao listar grupos:', error);
-
       res.status(500).json({
         status: 'Erro',
         message: 'Erro ao listar os grupos do usuário.',
@@ -233,7 +227,7 @@ exports.listUserGroups = [
 
 exports.listGroupMembers = [
   async (req, res) => {
-    const  id_grupo  = req.body.id_grupo;
+    const id_grupo = req.params.id;
 
     if (!id_grupo) {
       return res.status(400).json(
@@ -250,8 +244,8 @@ exports.listGroupMembers = [
         include: [
           {
             model: User,
-            through: { attributes: [] }, // Exclui campos da tabela intermediária
-            attributes: ['id_usuario', 'nome', 'sobrenome', 'email', 'foto_perfil'], // Retorna apenas campos necessários
+            through: { attributes: [] }, // Exclui dados da tabela intermediária
+            attributes: ['id_usuario', 'nome', 'sobrenome', 'email', 'foto_perfil'], // Retorna apenas os campos necessários
           },
         ],
       });
@@ -261,6 +255,17 @@ exports.listGroupMembers = [
           createResponse({
             status: 'Erro',
             message: 'Grupo não encontrado.',
+          })
+        );
+      }
+
+      // Verificar se o grupo tem membros
+      if (!group.Users || group.Users.length === 0) {
+        return res.status(404).json(
+          createResponse({
+            status: 'Erro',
+            message: 'Nenhum membro encontrado para este grupo.',
+            data: [],
           })
         );
       }
