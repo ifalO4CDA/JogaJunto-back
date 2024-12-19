@@ -79,3 +79,16 @@ exports.alterUserValidation = [
         .custom(existsEmail),
     ...addressValidation, // Inclui validações para endereço, se fornecido
 ];
+
+
+exports.loginUserValidation = [
+    body('email')
+        .trim()
+        .escape()
+        .normalizeEmail()
+        .isEmail().withMessage('O email deve ser válido.'),
+    body('senha')
+        .trim()
+        .escape()
+        .notEmpty().withMessage('A senha é obrigatória.'),
+];

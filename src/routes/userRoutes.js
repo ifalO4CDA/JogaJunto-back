@@ -4,6 +4,7 @@ const {
   createUserValidation,
   alterUserValidation,
   removeUserValidation,
+  loginUserValidation
 } = require('../utils/validations/userValidations');
 const router = express.Router();
 
@@ -12,5 +13,7 @@ router.post('/', createUserValidation, userController.createUser); // Validaçã
 router.get('/', userController.getUsers); // Listar usuários
 router.put('/:id', alterUserValidation, userController.alterUser); // Validação de alteração
 router.delete('/:id', removeUserValidation, userController.removeUser); // Validação de remoção
+
+router.post('/login', loginUserValidation, userController.login);
 
 module.exports = router;
