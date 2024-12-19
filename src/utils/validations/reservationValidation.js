@@ -92,7 +92,7 @@ exports.createReservationValidation = [
 
 // Validação de atualização de reservas
 exports.updateReservationValidation = [
-    param('id') // Pegando ID como parâmetro na rota
+    body('id_reserva') // Pegando ID como parâmetro na rota
         .notEmpty().withMessage('O ID da reserva é obrigatório.')
         .isInt().withMessage('O ID da reserva deve ser um número inteiro.')
         .custom(existsReservation),
@@ -141,7 +141,7 @@ exports.updateReservationValidation = [
 
 // Validação de remoção de reservas
 exports.removeReservationValidation = [
-    param('id') // Pegando ID como parâmetro na rota
+    body('id_reserva') // Pegando ID como parâmetro na rota
         .notEmpty().withMessage('O ID da reserva é obrigatório.')
         .isInt().withMessage('O ID da reserva deve ser um número inteiro.')
         .custom(existsReservation)
