@@ -80,6 +80,12 @@ exports.alterUserValidation = [
     ...addressValidation, // Inclui validações para endereço, se fornecido
 ];
 
+exports.getUserValidation = [
+    param('id')
+        .notEmpty().withMessage('O ID precisa ser informado.')
+        .isInt().withMessage('O ID deve ser um número inteiro.')
+        .custom(existsUser),
+];
 
 exports.loginUserValidation = [
     body('email')
