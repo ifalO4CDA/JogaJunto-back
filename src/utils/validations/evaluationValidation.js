@@ -1,4 +1,4 @@
-const { body } = require('express-validator');
+const { body, param } = require('express-validator');
 
 const evaluationValidation = {
   createEvaluationValidation: [
@@ -33,13 +33,13 @@ const evaluationValidation = {
   ],
 
   listEvaluationsByCourtValidation: [
-    body('id_quadra')
+    param('id')
       .notEmpty().withMessage('O campo id_quadra é obrigatório.')
       .isInt({ gt: 0 }).withMessage('O id_quadra deve ser um número inteiro válido.'),
   ],
 
   listEvaluationsByUserValidation: [
-    body('id_usuario')
+    param('id')
       .notEmpty().withMessage('O campo id_usuario é obrigatório.')
       .isInt({ gt: 0 }).withMessage('O id_usuario deve ser um número inteiro válido.'),
   ],

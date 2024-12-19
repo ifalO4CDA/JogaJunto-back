@@ -7,7 +7,7 @@ router.use(authenticate)
 
 router.post('/', EvaluationController.createEvaluation);
 router.delete('/', EvaluationController.deleteEvaluation);
-router.get('/quadra', EvaluationController.listEvaluationsByCourt);
-router.get('/usuario', EvaluationController.listEvaluationsByUser);
+router.get('/quadra/:id', EvaluationController.listEvaluationsByCourt);
+router.get('/usuario/:id', EvaluationController.listEvaluationsByUser);
 
 module.exports = router;

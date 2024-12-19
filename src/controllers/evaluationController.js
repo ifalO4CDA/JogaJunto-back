@@ -109,7 +109,7 @@ exports.deleteEvaluation = [
 // Listar Avaliações de uma Quadra
 exports.listEvaluationsByCourt = [
   async (req, res) => {
-    const  id_quadra  = req.body.id_quadra;
+    const  id_quadra  = req.params.id;
 
     try {
       const evaluations = await Evaluation.findAll({
@@ -140,7 +140,7 @@ exports.listEvaluationsByCourt = [
 // Listar Avaliações de um Usuário
 exports.listEvaluationsByUser = [
   async (req, res) => {
-    const  id_usuario  = req.body.id_usuario;
+    const  id_usuario  = req.params.id;
 
     try {
       const evaluations = await Evaluation.findAll({
