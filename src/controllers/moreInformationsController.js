@@ -29,6 +29,16 @@ exports.createMoreInformations = [
             );
         }
 
+        const moreInformationsExists = await MoreInformation.findOne({ where: { id_usuario } });
+        if (moreInformationsExists) {
+            return res.status(400).json(
+                createResponse({
+                    status: 'Erro',
+                    message: 'Informações adicionais já cadastradas.',
+                })
+            );
+        }
+
         const moreInformations = await MoreInformation.create({ id_usuario, documento_oficial, data_nascimento, cpf });
         res.status(201).json(
             createResponse({
