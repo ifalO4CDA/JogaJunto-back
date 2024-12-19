@@ -4,6 +4,7 @@ const User = require('./user');
 const Address = require('./address');
 const Room = require('./room');
 const RoomMember = require('./roomMember');
+const Court = require('./court'); // Importação do modelo de quadras
 
 User.belongsToMany(Group, {
   through: MemberGroup,
@@ -18,15 +19,18 @@ Group.belongsToMany(User, {
 });
 
 // Configuração das associações
-User.associate({ Room, Group, RoomMember, Address });
+User.associate({ Room, Group, RoomMember, Address, Court });
 Room.associate({ User, Group, RoomMember });
 Group.associate({ User, Room, MemberGroup });
 RoomMember.associate({ User, Room });
+Address.associate({ User, Court });
+Court.associate({ User, Address }); // Associações do modelo Court
 
 module.exports = {
   Room,
   User,
   Group,
   Address,
-  RoomMember 
-}
+  RoomMember,
+  Court,
+};
