@@ -14,14 +14,8 @@ const port = process.env.PORT || 3030;
 const cors = require('cors');
 
 const sequelize = require('./config/database'); // Importa a instância do Sequelize
-
 app.use(express.json());
-const corsOptions = {
-  origin: 'http://www.jogajunto.tech:3040',
-  optionsSuccessStatus: 200
-};
-
-app.use(cors(corsOptions));
+app.use(cors());
 
 // Rotas
 app.use('/api/users', userRoutes);
