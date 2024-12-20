@@ -11,14 +11,20 @@ const evaluationRoutes = require('./routes/evaluationRoutes');
 const courtRoutes = require('./routes/courtRoutes');
 const app = express();
 const port = process.env.PORT || 3030;
+const cors = require('cors');
 
 const sequelize = require('./config/database'); // Importa a instância do Sequelize
 
 app.use(express.json());
+const corsOptions = {
+  origin: 'http://www.jogajunto.tech:3040',
+  optionsSuccessStatus: 200
+};
 
+app.use(cors(corsOptions));
 
 // Rotas
-app.use('/api/users', userRoutes); 
+app.use('/api/users', userRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/moreInformations', moreInformationsRoutes);
 app.use('/api/reservation', reservationRoutes);
