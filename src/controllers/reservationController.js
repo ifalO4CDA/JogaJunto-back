@@ -1,5 +1,6 @@
 const { validationResult } = require('express-validator');
 const Reservation = require('../models/reservation');
+const Room = require('../models/room');
 const { createReservationValidation, updateReservationValidation, removeReservationValidation } = require('./../utils/validations/reservationValidation');
 const createResponse = require('./../utils/helpers/responseHelper');
 
@@ -53,6 +54,69 @@ exports.findAll = [
       res.status(500).json({ error: 'Erro ao buscar reservas' });
     }
   }
+];
+
+exports.findActiveReservationByRoom = [
+  async (req, res) => {
+    const id_sala = req.params.id; // Recebe o ID da sala da URL
+
+    try {
+      // Verifica se a sala foi enviada
+      if (!id_sala) {
+        return res.status(400).json(
+          createResponse({
+            status: 'Erro',
+            message: 'ID da sala é obrigatório.',
+            errors: [{ msg: 'O ID da sala não foi fornecido.' }],
+          })
+        );
+      }
+
+      // Busca a reserva ativa associada à sala
+      const reservation = await Reservation.findAll({
+        where: {
+          id_sala,
+          ativo: true, // Busca apenas reservas ativas
+        },
+        include: [
+          {
+            model: Room,
+            as: 'sala', // Nome do alias definido no modelo
+            attributes: ['id_sala', 'max_integrantes', 'privada'],
+          },
+        ],
+      });
+
+      // Verifica se encontrou a reserva
+      if (!reservation) {
+        return res.status(404).json(
+          createResponse({
+            status: 'Erro',
+            message: 'Nenhuma reserva ativa encontrada para a sala informada.',
+            errors: [],
+          })
+        );
+      }
+
+      // Retorna a reserva encontrada
+      return res.status(200).json(
+        createResponse({
+          status: 'Sucesso',
+          message: 'Reserva ativa encontrada com sucesso!',
+          data: reservation,
+        })
+      );
+    } catch (error) {
+      console.error('Erro ao buscar reserva ativa por sala:', error);
+      return res.status(500).json(
+        createResponse({
+          status: 'Erro',
+          message: 'Erro ao buscar reserva ativa pela sala.',
+          errors: [{ msg: error.message }],
+        })
+      );
+    }
+  },
 ];
 
 exports.update = [

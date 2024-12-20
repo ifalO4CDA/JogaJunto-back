@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const Reservation = require('../models/reservation');
 
 const Room = sequelize.define(
     'Room',
@@ -11,7 +12,7 @@ const Room = sequelize.define(
         },
         reserva_ativa: {
             type: DataTypes.BOOLEAN,
-            defaultValue: true,
+            defaultValue: false,
         },
         privada: {
             type: DataTypes.BOOLEAN,
@@ -68,7 +69,12 @@ Room.associate = (models) => {
         through: models.RoomMember, // Tabela intermediária
         foreignKey: 'id_sala',
         otherKey: 'id_usuario',
-        as: 'membros',
+        as: 'integrantes', // Renomeado para evitar conflito
+    });
+
+    Room.hasMany(models.Reservation, {
+        foreignKey: 'id_sala',
+        as: 'reservas', // Alias para facilitar a consulta
     });
 };
 

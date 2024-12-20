@@ -11,6 +11,7 @@ router.use(authenticate)
 router.post('/', ReservationController.CreateReservation);
 router.get('/', ReservationController.findAll);
 router.get('/:id', ReservationController.findById);
+router.get('/ativa/:id', ReservationController.findActiveReservationByRoom);
 router.put('/', ReservationController.update);
 router.delete('/', ReservationController.delete);
 

@@ -4,33 +4,51 @@ const User = require('./user');
 const Address = require('./address');
 const Room = require('./room');
 const RoomMember = require('./roomMember');
-const Court = require('./court'); // Importação do modelo de quadras
+const Court = require('./court');
+const Reservation = require('./reservation');
 
+// Configuração das associações
 User.belongsToMany(Group, {
   through: MemberGroup,
   foreignKey: 'id_usuario',
   otherKey: 'id_grupo',
 });
+User.associate({ Room, Group, RoomMember, Address, Court });
 
+// Associações do modelo Group
 Group.belongsToMany(User, {
   through: MemberGroup,
   foreignKey: 'id_grupo',
   otherKey: 'id_usuario',
 });
-
-// Configuração das associações
-User.associate({ Room, Group, RoomMember, Address, Court });
-Room.associate({ User, Group, RoomMember });
 Group.associate({ User, Room, MemberGroup });
-RoomMember.associate({ User, Room });
-Address.associate({ User, Court });
-Court.associate({ User, Address }); // Associações do modelo Court
 
+// Associações do modelo Room
+Room.belongsToMany(User, {
+  through: RoomMember,
+  foreignKey: 'id_sala',
+  otherKey: 'id_usuario',
+  as: 'membros',
+});
+Room.associate({ User, Group, RoomMember, Reservation });
+
+// Associações do modelo Court
+Court.associate({ User, Address });
+
+// Associações do modelo Address
+Address.associate({ User, Court });
+
+// Associações do modelo Reservation
+Reservation.associate({ Room, Court });
+
+// Exportação dos modelos
 module.exports = {
-  Room,
   User,
   Group,
   Address,
+  Room,
   RoomMember,
   Court,
+  Reservation,
+  MemberGroup,
 };
