@@ -47,7 +47,7 @@ exports.createRoom = async (req, res) => {
 
         // Criar a sala
         const room = await Room.create({
-            reserva_ativa: reserva_ativa ?? true,
+            reserva_ativa: reserva_ativa ?? false,
             privada: privada ?? false,
             id_usuario: id_usuario || null,
             id_grupo: id_grupo, // Permitir null aqui

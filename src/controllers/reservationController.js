@@ -14,18 +14,35 @@ exports.CreateReservation = [
         status: 'Erro',
         message: 'Erro de validação.',
         errors: errors.array(),
-      })
-      );
+      }));
     }
 
-    const reservation = await Reservation.create({ id_quadra, data_reserva, horario_inicio, horario_fim, status, valor_total, ativo, motivo_cancelamento, id_sala });
-    res.status(201).json(createResponse({
-      status: 'Sucesso',
-      message: 'Reserva feita com sucesso!',
-      data: { "id": reservation["id_reserva"] }
-    })
-    );
-  }
+    try {
+      // Cria a reserva
+      const reservation = await Reservation.create({ id_quadra, data_reserva, horario_inicio, horario_fim, status, valor_total, ativo, motivo_cancelamento, id_sala });
+
+      // Atualiza a flag `reserva_ativa` da sala
+      if (id_sala) {
+        const room = await Room.findByPk(id_sala);
+        if (room) {
+          await room.update({ reserva_ativa: true });
+        }
+      }
+
+      res.status(201).json(createResponse({
+        status: 'Sucesso',
+        message: 'Reserva feita com sucesso!',
+        data: { id: reservation.id_reserva },
+      }));
+    } catch (error) {
+      console.error('Erro ao criar reserva:', error);
+      res.status(500).json(createResponse({
+        status: 'Erro',
+        message: 'Erro ao criar a reserva.',
+        errors: [{ msg: error.message }],
+      }));
+    }
+  },
 ];
 
 exports.findById = [
@@ -151,59 +168,65 @@ exports.update = [
 ];
 
 exports.delete = [
-  removeReservationValidation,  // Validação
+  removeReservationValidation,
   async (req, res) => {
-      const reservationID = req.body.id_reserva;
-      const errors = validationResult(req);
+    const reservationID = req.body.id_reserva;
+    const { motivo_cancelamento } = req.body;
 
-      if (!errors.isEmpty()) {
-        return res.status(400).json(
-          createResponse({
-            status: 'Erro',
-            message: 'Erro de validação.',
-            errors: errors.array(),
-          })
-        );
-      }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json(createResponse({
+        status: 'Erro',
+        message: 'Erro de validação.',
+        errors: errors.array(),
+      }));
+    }
 
-      const { motivo_cancelamento } = req.body; // Obtém o motivo de cancelamento do corpo da requisição
-
-      // Se o motivo de cancelamento não for informado, retornar erro
-      if (!motivo_cancelamento) {
-        return res.status(400).json(
-          createResponse({
-            status: 'Erro',
-            message: 'Motivo de cancelamento é obrigatório.',
-          })
-        );
-      }
-
-      // Tenta encontrar a reserva pelo ID
+    try {
+      // Busca a reserva
       const reservation = await Reservation.findByPk(reservationID);
-      
       if (!reservation) {
-        return res.status(404).json(
-          createResponse({
-            status: 'Erro',
-            message: 'Reserva não encontrada.',
-          })
-        );
+        return res.status(404).json(createResponse({
+          status: 'Erro',
+          message: 'Reserva não encontrada.',
+        }));
       }
 
-      // Atualiza a reserva para marcar como cancelada e registra o motivo
+      // Cancela a reserva
       await reservation.update({
-        status: 'cancelada',  // Atualiza o status da reserva para "cancelada"
-        motivo_cancelamento,  // Armazena o motivo de cancelamento
-        ativo: false,         // Marca como inativo
+        status: 'cancelada',
+        motivo_cancelamento,
+        ativo: false,
       });
 
-      // Retorna a resposta de sucesso
-      res.status(200).json(
-        createResponse({
-          status: 'Sucesso',
-          message: 'Reserva cancelada com sucesso!',
-          data: { id: reservationID, motivo_cancelamento },
-        })
-      );
-  }
+      // Verifica se há outras reservas ativas para a sala
+      if (reservation.id_sala) {
+        const activeReservations = await Reservation.findAll({
+          where: {
+            id_sala: reservation.id_sala,
+            ativo: true,
+          },
+        });
+
+        // Atualiza a flag `reserva_ativa` da sala
+        const room = await Room.findByPk(reservation.id_sala);
+        if (room) {
+          await room.update({ reserva_ativa: activeReservations.length > 0 });
+        }
+      }
+
+      res.status(200).json(createResponse({
+        status: 'Sucesso',
+        message: 'Reserva cancelada com sucesso!',
+        data: { id: reservationID, motivo_cancelamento },
+      }));
+    } catch (error) {
+      console.error('Erro ao cancelar reserva:', error);
+      res.status(500).json(createResponse({
+        status: 'Erro',
+        message: 'Erro ao cancelar a reserva.',
+        errors: [{ msg: error.message }],
+      }));
+    }
+  },
 ];
