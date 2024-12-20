@@ -29,10 +29,10 @@ exports.createGroupValidation = [
         .isInt().withMessage('O ID do criador deve ser um número inteiro.')
         .custom(existsUser),
 
-    body('descricao')
+        body('max_integrantes')
         .optional()
-        .isString().withMessage('A descrição deve ser uma string.')
-        .isLength({ max: 255 }).withMessage('A descrição não pode ter mais de 255 caracteres.')
+        .isInt({ min: 1 })
+        .withMessage('O número máximo de integrantes deve ser um número inteiro maior ou igual a 1.')
 ];
 
 exports.updateGroupValidation = [

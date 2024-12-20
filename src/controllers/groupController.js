@@ -7,7 +7,7 @@ const { createGroupValidation, updateGroupValidation, removeGroupValidation } = 
 exports.createGroup = [
   createGroupValidation,
   async (req, res) => {
-    const { nome_grupo, id_criador } = req.body;
+    const { nome_grupo, id_criador, max_integrantes } = req.body;
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -21,7 +21,28 @@ exports.createGroup = [
     }
 
     try {
-      const group = await Group.create({ nome_grupo, id_criador });
+      // Verifica se o usuário criador existe
+      const user = await User.findByPk(id_criador);
+      if (!user) {
+        return res.status(404).json(
+          createResponse({
+            status: 'Erro',
+            message: 'Usuário criador não encontrado.',
+          })
+        );
+      }
+
+      // Cria o grupo com `qtd_atual_integrantes` como 1
+      const group = await Group.create({
+        nome_grupo,
+        id_criador,
+        max_integrantes: max_integrantes || 10, // Define um valor padrão se não for fornecido
+        qtd_atual_integrantes: 0, // Inclui o criador como integrante inicial
+      });
+
+      // Adiciona o criador à tabela intermediária de membros do grupo
+      await group.addUser(user);
+
       res.status(201).json(
         createResponse({
           status: 'Sucesso',
@@ -39,7 +60,7 @@ exports.createGroup = [
         })
       );
     }
-  }
+  },
 ];
 
 exports.updateGroup = [
