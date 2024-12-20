@@ -35,7 +35,7 @@ const RoomMember = sequelize.define('RoomMember', {
 RoomMember.associate = (models) => {
   RoomMember.belongsTo(models.User, {
     foreignKey: 'id_usuario',
-    as: 'usuario',
+    as: 'usuario', // Alias para a associação
   });
 };
 module.exports = RoomMember;

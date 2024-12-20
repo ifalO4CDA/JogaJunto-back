@@ -280,46 +280,46 @@ exports.addMemberToRoom = async (req, res) => {
 };
 exports.getUsersOfRoom = async (req, res) => {
     const { id_sala } = req.params;
-
+  
     try {
-        // Verificar se a sala existe
-        const room = await Room.findByPk(id_sala);
-        if (!room) {
-            return res.status(404).json({
-                status: 'Erro',
-                message: 'Sala não encontrada.',
-            });
-        }
-
-        // Obter os usuários da sala
-        const roomMembers = await RoomMember.findAll({
-            where: { id_sala },
-            include: [
-                {
-                    model: User,
-                    as: 'usuario', // Alias definido no relacionamento
-                    attributes: ['id_usuario', 'nome', 'email'],
-                },
-            ],
+      // Verificar se a sala existe
+      const room = await Room.findByPk(id_sala);
+      if (!room) {
+        return res.status(404).json({
+          status: 'Erro',
+          message: 'Sala não encontrada.',
         });
-
-        // Extrair apenas os dados dos usuários
-        const users = roomMembers.map((member) => member.usuario);
-
-        return res.status(200).json({
-            status: 'Sucesso',
-            message: 'Usuários da sala listados com sucesso!',
-            data: users, // Retorna apenas os usuários
-        });
+      }
+  
+      // Obter os usuários da sala
+      const roomMembers = await RoomMember.findAll({
+        where: { id_sala },
+        include: [
+          {
+            model: User,
+            as: 'usuario', // Alias definido no relacionamento
+            attributes: ['id_usuario', 'nome', 'email'],
+          },
+        ],
+      });
+  
+      // Extrair apenas os dados dos usuários
+      const users = roomMembers.map((member) => member.usuario);
+  
+      return res.status(200).json({
+        status: 'Sucesso',
+        message: 'Usuários da sala listados com sucesso!',
+        data: users, // Retorna apenas os usuários
+      });
     } catch (error) {
-        console.error('Erro ao obter usuários da sala:', error);
-        return res.status(500).json({
-            status: 'Erro',
-            message: 'Erro ao obter usuários da sala.',
-            error: error.message,
-        });
+      console.error('Erro ao obter usuários da sala:', error);
+      return res.status(500).json({
+        status: 'Erro',
+        message: 'Erro ao obter usuários da sala.',
+        error: error.message,
+      });
     }
-};
+  };
 
 
 // Remover membro da sala

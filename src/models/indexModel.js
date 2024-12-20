@@ -30,7 +30,13 @@ Room.belongsToMany(User, {
   otherKey: 'id_usuario',
   as: 'membros',
 });
+Room.hasMany(RoomMember, {
+  foreignKey: 'id_sala',
+  as: 'membrosDetalhes', // Novo alias para evitar conflitos
+});
 Room.associate({ User, Group, RoomMember, Reservation });
+
+RoomMember.associate({ User, Room });
 
 // Associações do modelo Court
 Court.associate({ User, Address });
