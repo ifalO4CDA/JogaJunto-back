@@ -6,11 +6,12 @@ const createResponse = require('../utils/helpers/responseHelper');
 exports.createRoom = async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json(createResponse({
-            status: 'Erro',
-            message: 'Erro de validação.',
-            errors: errors.array(),
-        })
+        return res.status(400).json(
+            createResponse({
+                status: 'Erro',
+                message: 'Erro de validação.',
+                errors: errors.array(),
+            })
         );
     }
 
@@ -18,10 +19,16 @@ exports.createRoom = async (req, res) => {
 
     try {
         // Verificar se o usuário existe
+        let user = null;
         if (id_usuario) {
-            const user = await User.findByPk(id_usuario);
+            user = await User.findByPk(id_usuario);
             if (!user) {
-                return res.status(404).json({ status: 'Erro', message: 'Usuário não encontrado.' });
+                return res.status(404).json(
+                    createResponse({
+                        status: 'Erro',
+                        message: 'Usuário criador não encontrado.',
+                    })
+                );
             }
         }
 
@@ -29,7 +36,12 @@ exports.createRoom = async (req, res) => {
         if (id_grupo) {
             const group = await Group.findByPk(id_grupo);
             if (!group) {
-                return res.status(404).json({ status: 'Erro', message: 'Grupo não encontrado.' });
+                return res.status(404).json(
+                    createResponse({
+                        status: 'Erro',
+                        message: 'Grupo não encontrado.',
+                    })
+                );
             }
         }
 
@@ -38,19 +50,32 @@ exports.createRoom = async (req, res) => {
             reserva_ativa: reserva_ativa ?? true,
             privada: privada ?? false,
             id_usuario: id_usuario || null,
-            id_grupo: id_grupo || null, // Permitir null aqui
+            id_grupo: id_grupo, // Permitir null aqui
             max_integrantes: max_integrantes || 10,
-            qtd_atual_integrantes: 0,
+            qtd_atual_integrantes: 0, // Inicia com 1 porque o criador será o primeiro integrante
         });
 
-        return res.status(201).json({
-            status: 'Sucesso',
-            message: 'Sala criada com sucesso!',
-            data: room,
-        });
+        // Adicionar o criador como membro da sala
+        if (user) {
+            await room.addMembro(user); // Método da associação `belongsToMany`
+        }
+
+        return res.status(201).json(
+            createResponse({
+                status: 'Sucesso',
+                message: 'Sala criada com sucesso!',
+                data: room,
+            })
+        );
     } catch (error) {
         console.error('Erro ao criar sala:', error);
-        return res.status(500).json({ status: 'Erro', message: 'Erro ao criar sala.', error: error.message });
+        return res.status(500).json(
+            createResponse({
+                status: 'Erro',
+                message: 'Erro ao criar sala.',
+                errors: [error.message],
+            })
+        );
     }
 };
 // Listar salas
